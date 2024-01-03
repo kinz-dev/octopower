@@ -6,3 +6,5 @@
 
 pub mod account;
 pub mod consumption;
+
+pub mod standing_unit_rate;

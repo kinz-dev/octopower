@@ -1,5 +1,7 @@
 # The number of half-hourly meter readings to import.
-num_readings=1000
+num_readings=100
+# Number of (Octopus tracking plan) daily record
+unit_rates_num_readings=10
 
 [octopus]
 # The email address of your Octopus Energy account.
@@ -20,3 +22,5 @@ url="http://localhost:8086"
 database="octopower"
 # The name of the measurement in the database to which to write data.
 measurement="octopower"
+# API token
+#token=""

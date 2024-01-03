@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use eyre::{Report, WrapErr};
-use influx_db_client::{reqwest::Url, Client};
+use influxdb::{Client};
 use serde::Deserialize;
 use std::fs::read_to_string;
 
@@ -21,6 +21,8 @@ pub struct Config {
     pub octopus: OctopusConfig,
     #[serde(default = "default_num_readings")]
     pub num_readings: usize,
+    #[serde(default = "default_num_readings")]
+    pub unit_rates_num_readings: usize
 }
 
 fn default_num_readings() -> usize {
@@ -42,11 +44,12 @@ impl Config {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct InfluxDbConfig {
-    pub url: Url,
+    pub url: String,
     pub username: Option<String>,
     pub password: Option<String>,
     pub database: String,
     pub measurement: String,
+    pub token: Option<String>
 }
 
 impl Default for InfluxDbConfig {
@@ -57,6 +60,7 @@ impl Default for InfluxDbConfig {
             password: None,
             database: DEFAULT_DATABASE.to_owned(),
             measurement: DEFAULT_MEASUREMENT.to_owned(),
+            token: None
         }
     }
 }
@@ -65,8 +69,8 @@ impl Default for InfluxDbConfig {
 /// database.
 pub fn get_influxdb_client(config: &InfluxDbConfig) -> Result<Client, Report> {
     let mut influxdb_client = Client::new(config.url.to_owned(), &config.database);
-    if let (Some(username), Some(password)) = (&config.username, &config.password) {
-        influxdb_client = influxdb_client.set_authentication(username, password);
+    if let Some(token) = &config.token {
+        influxdb_client = influxdb_client.with_token(token)
     }
     Ok(influxdb_client)
 }

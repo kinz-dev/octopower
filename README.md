@@ -1,5 +1,12 @@
 # About this project
 
+### This project is fork from qwandor/octopower.
+Some changes on top of the octopower project
+- Updated influxdb rust client library that is compatible with latest 2.x version of influxDB
+- Adding standing rates query and feeding into influxdb.
+
+
+### Original project readme:
 The repository includes a number of related crates using the
 [Octopus Energy API](https://developer.octopus.energy/docs/api/):
 

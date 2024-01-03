@@ -22,8 +22,9 @@ pub mod results;
 
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::{Client, StatusCode, Url};
-use results::{account::Account, consumption::Readings};
+use results::{account::Account, consumption::Readings, standing_unit_rate::StandingUnitRates};
 use std::fmt::{self, Display, Formatter};
+use serde_json::value::Index;
 use thiserror::Error;
 use url::ParseError;
 
@@ -67,8 +68,8 @@ pub async fn authenticate(email: &str, password: &str) -> Result<AuthToken, ApiE
         .json()
         .await?;
     if let Some(authenticate_query::ResponseData {
-        obtain_kraken_token: Some(token),
-    }) = response.data
+                    obtain_kraken_token: Some(token),
+                }) = response.data
     {
         Ok(AuthToken(token.token))
     } else {
@@ -78,15 +79,15 @@ pub async fn authenticate(email: &str, password: &str) -> Result<AuthToken, ApiE
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "graphql/schema.graphql",
-    query_path = "graphql/authenticate.graphql"
+schema_path = "graphql/schema.graphql",
+query_path = "graphql/authenticate.graphql"
 )]
 struct AuthenticateQuery;
 
 /// Fetch information about the given account from the Octopus REST API.
 pub async fn get_account(auth_token: &AuthToken, account_id: &str) -> Result<Account, ApiError> {
     let client = Client::new();
-    let url = format!("https://api.octopus.energy/v1/accounts/{}/", account_id);
+    let url = format!("https://api.octopus.energy/v1/accounts/{}/", account_id.to_string());
     let response = client
         .get(url)
         .header("Authorization", &auth_token.0)
@@ -114,6 +115,13 @@ impl MeterType {
         match self {
             Self::Electricity => "electricity-meter-points",
             Self::Gas => "gas-meter-points",
+        }
+    }
+
+    fn tariffs_path(self) -> &'static str {
+        match self {
+            Self::Electricity => "electricity-tariffs",
+            Self::Gas => "gas-tariffs",
         }
     }
 }
@@ -178,16 +186,52 @@ pub async fn get_consumption(
     let client = Client::new();
     let mut url = Url::parse(&format!(
         "https://api.octopus.energy/v1/{}/{}/meters/{}/consumption/?page={}&page_size={}",
-        meter_type.path_component(),
-        mpxn,
-        serial,
+        meter_type.path_component().to_string(),
+        mpxn.to_string(),
+        serial.to_string(),
         page + 1,
         page_size,
-    ))?;
+    ).to_string())?;
     if let Some(grouping) = grouping {
         url.query_pairs_mut()
             .append_pair("group_by", grouping.as_str());
     }
+    dbg!(&url);
+
+    let response = client
+        .get(url)
+        .header("Authorization", &auth_token.0)
+        .send()
+        .await?;
+
+    let status = response.status();
+    if status.is_success() {
+        Ok(response.json().await?)
+    } else {
+        let body = response.text().await?;
+        Err(ApiError::RestError { status, body })
+    }
+}
+
+/// Fetch Agile Octopus Electricity-tariffs
+pub async fn get_standard_unit_rates(
+    auth_token: &AuthToken,
+    meter_type: MeterType,
+    product_code: &str,
+    tariff_code: &str,
+    page: u32,
+    page_size: usize
+) -> Result<StandingUnitRates, ApiError> {
+    let client = Client::new();
+    let mut url = Url::parse(&format!(
+        "https://api.octopus.energy/v1/products/{}/{}/{}/standard-unit-rates/?page={}&page_size={}",
+        product_code.to_string(),
+        meter_type.tariffs_path().to_string(),
+        tariff_code.to_string(),
+        page + 1,
+        page_size,
+    ).to_string())?;
+    dbg!(&url);
     let response = client
         .get(url)
         .header("Authorization", &auth_token.0)
