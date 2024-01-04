@@ -3,3 +3,5 @@
 octo-influx.toml
 !/octo-influx/octo-influx.toml
 !/Cargo.lock
+!/docker/configuration.env
+!/octo-influx/octo-influx.toml

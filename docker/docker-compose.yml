@@ -1,0 +1,28 @@
+version: '3.9'
+
+############################# NETWORKS
+networks:
+  default:
+    driver: bridge
+
+services:
+  influxdb:
+    build: influxdb
+    env_file: configuration.env
+    ports:
+      - '8086:8086'
+    volumes:
+      - influxdb_data2:/var/lib/influxdb2
+  # grafana:
+  #   build: grafana
+  #   env_file: configuration.env
+  #   links:
+  #     - influxdb
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+
+volumes:
+  # grafana_data: {}
+  influxdb_data2: {}
