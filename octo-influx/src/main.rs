@@ -47,14 +47,14 @@ async fn main() -> Result<(), Report> {
                     &meter.serial_number, &influxdb_client, "consumption", config.num_readings) .await?;
             }
         }
-        for gas_meter_point in &property.gas_meter_points {
-            info!("Gas MPRN {}", gas_meter_point.mprn);
-            for meter in &gas_meter_point.meters {
-                info!("Meter serial {}", meter.serial_number);
-                import_consumption_readings(&token, MeterType::Gas, &gas_meter_point.mprn, &meter.serial_number,
-                    &influxdb_client, "consumption", config.num_readings).await?;
-            }
-        }
+        // for gas_meter_point in &property.gas_meter_points {
+        //     info!("Gas MPRN {}", gas_meter_point.mprn);
+        //     for meter in &gas_meter_point.meters {
+        //         info!("Meter serial {}", meter.serial_number);
+        //         import_consumption_readings(&token, MeterType::Gas, &gas_meter_point.mprn, &meter.serial_number,
+        //             &influxdb_client, "consumption", config.num_readings).await?;
+        //     }
+        // }
 
         // *************************
         // Unit rate

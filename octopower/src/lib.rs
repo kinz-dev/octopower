@@ -24,7 +24,6 @@ use graphql_client::{GraphQLQuery, Response};
 use reqwest::{Client, StatusCode, Url};
 use results::{account::Account, consumption::Readings, standing_unit_rate::StandingUnitRates};
 use std::fmt::{self, Display, Formatter};
-use serde_json::value::Index;
 use thiserror::Error;
 use url::ParseError;
 
@@ -223,7 +222,7 @@ pub async fn get_standard_unit_rates(
     page_size: usize
 ) -> Result<StandingUnitRates, ApiError> {
     let client = Client::new();
-    let mut url = Url::parse(&format!(
+    let url = Url::parse(&format!(
         "https://api.octopus.energy/v1/products/{}/{}/{}/standard-unit-rates/?page={}&page_size={}",
         product_code.to_string(),
         meter_type.tariffs_path().to_string(),
